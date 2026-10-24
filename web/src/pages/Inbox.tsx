@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowsClockwiseIcon, ArrowSquareOutIcon, ChatCircleTextIcon, ChatsCircleIcon, FacebookLogoIcon, InstagramLogoIcon, PaperPlaneRightIcon, SparkleIcon, WarningIcon, WhatsappLogoIcon } from "@phosphor-icons/react";
-import { ago, api, fail, toast, useApi, useTenants } from "../api";
+import { ago, api, countReply, fail, toast, useApi, useTenants } from "../api";
 import { Empty, Seg, TenantPicker } from "../ui";
 
 interface Item {
@@ -110,6 +110,7 @@ function Thread({ item, onSent }: { item: Item; onSent: () => void }) {
     try {
       await api("/inbox/reply", { body: { ...target, to: item.to, text } });
       toast(item.kind === "dm" ? `Sent to ${item.from}` : "Reply posted");
+      countReply();
       setText("");
       reload();
       onSent();

@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ChartPieSliceIcon, ChatCircleDotsIcon, ChatsCircleIcon, FilmSlateIcon, FilmStripIcon, GearSixIcon, HeartIcon, IconContext, MegaphoneIcon, MonitorIcon, MoonIcon, SidebarSimpleIcon,
-  SquaresFourIcon, SunIcon, UsersThreeIcon,
+  SquaresFourIcon, SunIcon, TagIcon,
 } from "@phosphor-icons/react";
 import "@hyperframes/player";
 import "./styles.css";
-import { api, donateURL, makerURL, repoURL, setDisplay, setToast, useApi } from "./api";
-import { Mark } from "./ui";
+import { api, donateURL, makerURL, repoURL, setDisplay, setNudge, setToast, snoozeNudge, useApi } from "./api";
+import { Mark, Modal } from "./ui";
 import Overview from "./pages/Overview";
 import Projects from "./pages/Projects";
 import ProjectPage from "./pages/Project";
@@ -27,7 +27,7 @@ const nav = [
     { path: "/projects", label: "Projects", icon: FilmSlateIcon },
     { path: "/library", label: "Library", icon: FilmStripIcon },
     { path: "/campaigns", label: "Campaigns", icon: MegaphoneIcon },
-    { path: "/clients", label: "Brands", icon: UsersThreeIcon },
+    { path: "/clients", label: "Brands", icon: TagIcon },
   ] },
   { group: "Social", items: [
     { path: "/inbox", label: "Inbox", icon: ChatsCircleIcon },
@@ -63,10 +63,13 @@ function App() {
   const hash = useHash();
   const [, section, id, sub] = hash.split("/");
   const [toast, setT] = useState<{ msg: string; err?: boolean }>();
+  const [why, setWhy] = useState<string>();
   useEffect(() => {
     let timer: number;
     setToast((msg, err) => { setT({ msg, err }); clearTimeout(timer); timer = window.setTimeout(() => setT(undefined), err ? 6000 : 3000); });
+    setNudge(setWhy);
   }, []);
+  const closeNudge = () => setWhy(undefined);
 
   const page = (() => {
     const n = Number(id);
@@ -109,7 +112,8 @@ function App() {
           <div className="brand">
             <a href="#/" aria-label="37Studio home"><Mark size={26} /></a>
             <div className="wordmark">37<span>Studio</span></div>
-            <button className="btn ghost sm icon side-toggle" onClick={() => setCollapsed(true)} title="Collapse sidebar (Ctrl+B)" aria-label="Collapse sidebar"><SidebarSimpleIcon size={16} /></button>
+            <button className="btn ghost sm icon side-toggle" onClick={() => setCollapsed(!collapsed)} title={`${collapsed ? "Expand" : "Collapse"} sidebar (Ctrl+B)`}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} aria-expanded={!collapsed}><SidebarSimpleIcon size={16} /></button>
           </div>
           {nav.map(({ group, items }) => (
             <div key={group}>
@@ -133,9 +137,6 @@ function App() {
             <a href={donateURL} target="_blank" rel="noreferrer" title={collapsed ? "Donate" : "37Studio is free; donations keep it going"}>
               <HeartIcon size={18} /> <span className="nav-label">Donate</span>
             </a>
-            <a role="button" tabIndex={0} className="expand" title="Expand sidebar (Ctrl+B)" onClick={() => setCollapsed(false)} onKeyDown={(e) => e.key === "Enter" && setCollapsed(false)}>
-              <SidebarSimpleIcon size={18} /> <span className="nav-label">Expand</span>
-            </a>
             {upd?.newer && <a className="who" href="#/settings/about" style={{ color: "var(--primary)" }}>Version {upd.latest} available</a>}
             <a className="who" href={repoURL} target="_blank" rel="noreferrer">37Studio {upd?.current} · open source</a>
             <a className="who" href={makerURL} target="_blank" rel="noreferrer">Made by Shaitrish</a>
@@ -143,6 +144,16 @@ function App() {
         </aside>
         <main className="main">{page}</main>
         {toast && <div className={`toast ${toast.err ? "err" : ""}`} role="status">{toast.msg}</div>}
+        {why && (
+          <Modal title="Nice work" onClose={closeNudge} footer={<>
+            <button className="btn ghost" onClick={() => { snoozeNudge(365); closeNudge(); }}>I've already donated</button>
+            <button className="btn" onClick={closeNudge}>Maybe later</button>
+            <a className="btn primary" href={donateURL} target="_blank" rel="noreferrer" onClick={closeNudge}><HeartIcon size={16} /> Support 37Studio</a>
+          </>}>
+            <p>{why}</p>
+            <p className="muted">37Studio is free and open source, with no ads, accounts or paid tiers. Donations are what keep us working on it: fixes, new features and more platforms. If it saved you time today, your support goes a long way.</p>
+          </Modal>
+        )}
       </div>
     </IconContext.Provider>
   );

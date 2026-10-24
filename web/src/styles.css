@@ -98,11 +98,16 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .nav a.active { background: var(--active); color: var(--fg); }
 .nav-label, .wordmark, .nav-group, .side-foot .who { transition: opacity 0.16s; }
 .collapsed .nav-label, .collapsed .wordmark, .collapsed .nav-group, .collapsed .side-foot .who { opacity: 0; pointer-events: none; }
-.collapsed .brand .side-toggle { display: none; }
+/* Collapsed, the toggle stays where it was: it takes the logo's place while the pointer is over the sidebar (always, on touch screens). */
+.brand { position: relative; }
+.brand > a { transition: opacity 0.12s; }
+.collapsed .brand .side-toggle { position: absolute; left: 3px; top: 3px; opacity: 0; pointer-events: none; }
+.collapsed .sidebar:hover .side-toggle, .collapsed .side-toggle:focus-visible { opacity: 1; pointer-events: auto; }
+.collapsed .sidebar:hover .brand > a, .collapsed .brand:has(.side-toggle:focus-visible) > a { opacity: 0; }
+@media (hover: none) { .collapsed .brand .side-toggle { opacity: 1; pointer-events: auto; } .collapsed .brand > a { opacity: 0; } }
 .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 2px; padding-top: 10px; border-top: 1px solid var(--border); }
 .side-foot .nav a { cursor: pointer; }
 .who { display: flex; align-items: center; gap: 10px; padding: 8px 10px 2px; white-space: nowrap; font-size: 12px; color: var(--faint-fg); }
-.app:not(.collapsed) .side-foot .expand { display: none; }
 
 .main { padding: 32px 40px 64px; min-width: 0; }
 .page { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; animation: rise 0.32s var(--ease); }
@@ -119,7 +124,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   .app, .app.collapsed { grid-template-columns: 1fr; }
   .sidebar { position: sticky; z-index: 20; height: auto; flex-direction: row; align-items: center; overflow-x: auto; padding: 8px 16px; border-right: 0; border-bottom: 1px solid var(--border); }
   .brand { margin: 0 8px 0 0; padding: 0; }
-  .nav-label, .nav-group, .wordmark, .brand .side-toggle, .who, .side-foot .expand { display: none; }
+  .nav-label, .nav-group, .wordmark, .brand .side-toggle, .who { display: none; }
   .nav { flex-direction: row; }
   .side-foot { margin: 0 0 0 auto; padding: 0; border: 0; flex-direction: row; }
   .main { padding: 20px 16px 48px; }
@@ -344,7 +349,10 @@ input[type="color"].input { padding: 3px; height: 36px; cursor: pointer; }
 .msg-agent p + p, .msg-agent p + ul, .msg-agent ul + p, .msg-agent p + ol, .msg-agent ol + p { margin-top: 8px; }
 .msg-agent ul, .msg-agent ol { margin: 0; padding-left: 20px; }
 .msg-agent code { font-family: var(--mono); font-size: 12px; background: var(--muted); padding: 1px 5px; border-radius: 2px; }
-.msg-agent h4 { margin: 10px 0 4px; font-size: 13.5px; }
+.msg-agent h2, .msg-agent h3, .msg-agent h4 { margin: 10px 0 4px; font-size: 13.5px; }
+.md-doc { max-width: 78ch; max-height: 640px; overflow: auto; }
+.md-doc h2 { font-size: 20px; margin: 0 0 10px; }
+.md-doc h3 { font-size: 15px; margin: 22px 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
 .msg-tool { display: flex; gap: 8px; align-items: center; font-size: 12.5px; color: var(--muted-fg); padding: 5px 9px; background: var(--muted); border-radius: var(--radius-sm); min-width: 0; }
 .msg-tool svg { flex: none; }
 .msg-tool b { font-weight: 500; color: var(--fg); flex: none; }
@@ -577,11 +585,15 @@ label.cbtn { cursor: pointer; }
 .approve-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; border-radius: var(--radius); background: var(--warn-soft); }
 
 /* assistant: the chat fills the page */
-.assistant .chat { position: static; height: calc(100vh - 170px); min-height: 420px; }
+/* The page is exactly the window's height, so the feed scrolls and the composer stays put; a guessed height let the window scroll too. */
+.main:has(.assistant) { padding-bottom: 20px; }
+.page.assistant { height: calc(100dvh - 52px); min-height: 480px; }
+.assistant .chat { position: static; flex: 1; height: auto; min-height: 0; }
+@media (max-width: 860px) { .main:has(.assistant) { padding-bottom: 16px; } .page.assistant { height: calc(100dvh - 92px); } }
 .assistant .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .msg-agent a { color: var(--primary); text-underline-offset: 2px; }
 
-/* ---- company logos in lists, and the logo dropdown */
+/* ---- brand logos in lists, and the logo dropdown */
 .avatar.sm { width: 28px; height: 28px; border-radius: var(--radius-sm); font-size: 11px; }
 .avatar.xs { width: 20px; height: 20px; border-radius: 3px; font-size: 9px; letter-spacing: -0.02em; }
 .tenant-tag { display: inline-flex; align-items: center; gap: 7px; min-width: 0; max-width: 100%; vertical-align: middle; }

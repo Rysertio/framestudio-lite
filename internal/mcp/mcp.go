@@ -253,7 +253,7 @@ func merge(a, b map[string]any) map[string]any {
 	return out
 }
 
-const mcpInstructions = `37Studio makes branded videos for brands with an AI editor agent and posts them to social media. Brands hold a brand library, design system and knowledge base; projects are videos built by the agent in the background.
+const mcpInstructions = `37Studio makes branded videos for brands with an AI editor agent and posts them to social media. Brands (company in tool names, for compatibility) hold a brand library, design system and knowledge base; projects are videos built by the agent in the background.
 Video work is slow: after create_video or send_message, check get_project_messages and get_project every minute or so until the status is "review", then look at the files in out/. Ask the user before deleting anything, publishing, approving Autopilot videos or sending inbox replies.`
 
 // Handler answers JSON-RPC over POST. Browsers can reach localhost too, so a request from another site's page is

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { WarningIcon, CaretRightIcon, FilmSlateIcon, GlobeIcon, PencilSimpleIcon, PlusIcon, TrashIcon, UsersThreeIcon } from "@phosphor-icons/react";
 import { api, Campaign, fail, go, Project, Tenant, toast, upload, useApi } from "../api";
-import { AssetEditor, Avatar, DropZone, Empty, FileTile, Progress, Seg } from "../ui";
+import { AssetEditor, Avatar, DropZone, Empty, FileTile, Md, Progress, Seg } from "../ui";
 import { ProjectTable } from "./Projects";
 import { NewProjectModal } from "./NewProject";
 import { ScanModal, TenantModal } from "./Clients";
@@ -210,6 +210,7 @@ function Folder({ tenant, folder, reload, ext }: { tenant: Tenant; folder: (type
 
 function Knowledge({ tenant, reload, onScan }: { tenant: Tenant; reload: () => void; onScan: () => void }) {
   const [text, setText] = useState(tenant.knowledge ?? "");
+  const [view, setView] = useState<"read" | "edit">(tenant.knowledge ? "read" : "edit");
   useEffect(() => setText(tenant.knowledge ?? ""), [tenant.knowledge]);
   const dirty = text !== (tenant.knowledge ?? "");
   const save = () => api(`/tenants/${tenant.id}`, { method: "PUT", body: { knowledge: text } }).then(() => { toast("Knowledge base saved"); reload(); }, fail);
@@ -218,6 +219,7 @@ function Knowledge({ tenant, reload, onScan }: { tenant: Tenant; reload: () => v
       <div className="card-h">
         <h2>Knowledge base</h2>
         <span className="small faint spacer">every project agent for this brand reads this first</span>
+        {text && <Seg value={view} onChange={setView} options={[{ value: "read", label: "Preview" }, { value: "edit", label: "Edit" }]} />}
         <button className="btn sm" disabled={!dirty} onClick={save}>Save</button>
       </div>
       <div className="card-b stack" style={{ gap: 12 }}>
@@ -228,8 +230,8 @@ function Knowledge({ tenant, reload, onScan }: { tenant: Tenant; reload: () => v
             <button className="btn primary" onClick={onScan}><GlobeIcon size={15} /> Scan</button>
           </Empty>
         ) : null}
-        <textarea className="textarea mono" rows={22} value={text} onChange={(e) => setText(e.target.value)}
-          placeholder="# What they do&#10;# Audience&#10;# Offers & courses&#10;# Tone of voice&#10;# Proof & testimonials&#10;# Video ideas" />
+        {text && view === "read" ? <Md text={text} className="msg-agent md-doc" /> : <textarea className="textarea mono" rows={22} value={text} onChange={(e) => setText(e.target.value)}
+          placeholder="# What they do&#10;# Audience&#10;# Offers & courses&#10;# Tone of voice&#10;# Proof & testimonials&#10;# Video ideas" />}
       </div>
     </div>
   );

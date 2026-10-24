@@ -298,3 +298,48 @@ export function ModelPicker({ value, qualities, onChange }: { value: string; qua
     </div>
   );
 }
+
+/** Just enough markdown for agent replies and the knowledge base: paragraphs, lists, headings, **bold**, `code`, links. */
+export function Md({ text, className = "msg-agent" }: { text: string; className?: string }) {
+  const blocks: ReactNode[] = [];
+  let para: string[] = [];
+  let items: string[] = [], ordered = false;
+  const flushPara = () => { if (para.length) blocks.push(<p key={blocks.length}>{inline(para.join(" "))}</p>); para = []; };
+  const flushList = () => {
+    if (!items.length) return;
+    const lis = items.map((t, i) => <li key={i}>{inline(t)}</li>);
+    blocks.push(ordered ? <ol key={blocks.length}>{lis}</ol> : <ul key={blocks.length}>{lis}</ul>);
+    items = [];
+  };
+  for (const line of text.split("\n")) {
+    const li = line.match(/^\s*([-*•]|\d+[.)])\s+(.*)/);
+    const h = line.match(/^(#{1,6})\s+(.*)/);
+    if (li) {
+      flushPara();
+      const isOrdered = /\d/.test(li[1]);
+      if (items.length && isOrdered !== ordered) flushList();
+      ordered = isOrdered;
+      items.push(li[2]);
+    } else if (h) {
+      flushPara(); flushList();
+      const H = (["h2", "h3"][h[1].length - 1] ?? "h4") as "h4";
+      blocks.push(<H key={blocks.length}>{inline(h[2])}</H>);
+    } else if (!line.trim()) {
+      flushPara(); flushList();
+    } else {
+      flushList();
+      para.push(line.trim());
+    }
+  }
+  flushPara(); flushList();
+  return <div className={className}>{blocks}</div>;
+}
+
+function inline(s: string): ReactNode[] {
+  return s.split(/(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\((?:#\/|https?:\/\/)[^)\s]+\))/g).map((part, i) => {
+    const link = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (link) return <a key={i} href={link[2]} {...(link[2].startsWith("#") ? {} : { target: "_blank", rel: "noreferrer" })}>{link[1]}</a>;
+    return part.length > 4 && part.startsWith("**") && part.endsWith("**") ? <strong key={i}>{part.slice(2, -2)}</strong> :
+    part.length > 2 && part.startsWith("`") && part.endsWith("`") ? <code key={i}>{part.slice(1, -1)}</code> : part;
+  });
+}

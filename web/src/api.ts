@@ -164,3 +164,21 @@ let toastFn: ToastFn = () => {};
 export const setToast = (fn: ToastFn) => { toastFn = fn; };
 export const toast: ToastFn = (msg, err) => toastFn(msg, err);
 export const fail = (e: unknown) => toast(e instanceof Error ? e.message : String(e), true);
+
+// Donation ask at a happy moment (a finished export, the 10th inbox reply), at most once a month.
+// ponytail: per-browser localStorage; another browser may ask once more, which is harmless.
+let nudgeFn: (why: string) => void = () => {};
+export const setNudge = (fn: typeof nudgeFn) => { nudgeFn = fn; };
+export const snoozeNudge = (days: number) => { try { localStorage.setItem("donate_snooze", String(Date.now() + days * 864e5)); } catch { /* no storage */ } };
+export function nudge(why: string) {
+  try { if (Date.now() < Number(localStorage.getItem("donate_snooze"))) return; } catch { return; }
+  snoozeNudge(30);
+  nudgeFn(why);
+}
+export function countReply() {
+  try {
+    const n = Number(localStorage.getItem("inbox_sent")) + 1;
+    localStorage.setItem("inbox_sent", String(n));
+    if (n === 10) nudge("You've answered 10 messages from 37Studio.");
+  } catch { /* no storage */ }
+}

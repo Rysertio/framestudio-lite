@@ -1,8 +1,8 @@
 import { ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpIcon, BookmarkSimpleIcon, CheckCircleIcon, LinkIcon, ShareNetworkIcon, CaretRightIcon, FilmSlateIcon, DownloadSimpleIcon, FileTextIcon, FilmStripIcon, GlobeIcon, ListChecksIcon, PencilLineIcon, ArrowsClockwiseIcon, ArrowsOutIcon, MicrophoneIcon, MicrophoneSlashIcon, MusicNotesIcon, SpeakerHighIcon, ImageIcon, PlayIcon, PauseIcon, PaperclipIcon, MagnifyingGlassIcon, SlidersHorizontalIcon, SparkleIcon, SquareIcon, TerminalWindowIcon, TrashIcon, MagicWandIcon, WrenchIcon, XIcon } from "@phosphor-icons/react";
 import { Quality } from "../api";
-import { api, bytes, ChatEvent, clock, fail, FileInfo, go, languageName, Meta, Project, toast, upload, cash, useApi } from "../api";
-import { DropZone, Empty, FileTile, KindIcon, ModelOptions, ModelPicker, Progress, Seg, Status, projectStatus } from "../ui";
+import { api, bytes, ChatEvent, clock, fail, FileInfo, go, languageName, Meta, nudge, Project, toast, upload, cash, useApi } from "../api";
+import { DropZone, Empty, Md, FileTile, KindIcon, ModelOptions, ModelPicker, Progress, Seg, Status, projectStatus } from "../ui";
 import { presetIcon } from "./Projects";
 import { PostsCard, PublishModal } from "./Social";
 import { SaveTemplate } from "./Library";
@@ -59,6 +59,15 @@ export default function ProjectPage({ id }: { id: number }) {
   useEffect(() => { if (p?.composition && !shownComp) setShownComp(p.composition); }, [p?.composition]);
   const hasVideos = !!p?.children?.length;
   useEffect(() => { if (hasVideos) setTab((t) => (t === "brief" ? "videos" : t)); }, [hasVideos]);
+
+  // A new final video landing while the person watches is the happy moment to ask for a donation.
+  const finalVideos = p?.outputs?.filter((f) => f.kind === "video").length;
+  const seenFinals = useRef<number>(undefined);
+  useEffect(() => {
+    if (finalVideos === undefined) return;
+    if (seenFinals.current !== undefined && finalVideos > seenFinals.current) nudge("Your video is rendered and ready to post.");
+    seenFinals.current = finalVideos;
+  }, [finalVideos]);
 
   if (error) return <div className="page"><Empty icon={<FilmSlateIcon size={28} />} title="Project not found"><a className="btn" href="#/projects">Back to projects</a></Empty></div>;
   if (!p) return null;
@@ -606,50 +615,6 @@ export function EventView({ e, pid }: { e: Parsed; pid: number }) {
     case "error": return <div className="msg-error">{e.b.text}</div>;
     default: return <div className="msg-info">{e.b.text}</div>;
   }
-}
-
-/** Just enough markdown for agent replies: paragraphs, lists, headings, **bold**, `code`. */
-function Md({ text }: { text: string }) {
-  const blocks: ReactNode[] = [];
-  let para: string[] = [];
-  let items: string[] = [], ordered = false;
-  const flushPara = () => { if (para.length) blocks.push(<p key={blocks.length}>{inline(para.join(" "))}</p>); para = []; };
-  const flushList = () => {
-    if (!items.length) return;
-    const lis = items.map((t, i) => <li key={i}>{inline(t)}</li>);
-    blocks.push(ordered ? <ol key={blocks.length}>{lis}</ol> : <ul key={blocks.length}>{lis}</ul>);
-    items = [];
-  };
-  for (const line of text.split("\n")) {
-    const li = line.match(/^\s*([-*•]|\d+[.)])\s+(.*)/);
-    const h = line.match(/^#{1,6}\s+(.*)/);
-    if (li) {
-      flushPara();
-      const isOrdered = /\d/.test(li[1]);
-      if (items.length && isOrdered !== ordered) flushList();
-      ordered = isOrdered;
-      items.push(li[2]);
-    } else if (h) {
-      flushPara(); flushList();
-      blocks.push(<h4 key={blocks.length}>{inline(h[1])}</h4>);
-    } else if (!line.trim()) {
-      flushPara(); flushList();
-    } else {
-      flushList();
-      para.push(line.trim());
-    }
-  }
-  flushPara(); flushList();
-  return <div className="msg-agent">{blocks}</div>;
-}
-
-function inline(s: string): ReactNode[] {
-  return s.split(/(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\((?:#\/|https?:\/\/)[^)\s]+\))/g).map((part, i) => {
-    const link = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-    if (link) return <a key={i} href={link[2]} {...(link[2].startsWith("#") ? {} : { target: "_blank", rel: "noreferrer" })}>{link[1]}</a>;
-    return part.length > 4 && part.startsWith("**") && part.endsWith("**") ? <strong key={i}>{part.slice(2, -2)}</strong> :
-    part.length > 2 && part.startsWith("`") && part.endsWith("`") ? <code key={i}>{part.slice(1, -1)}</code> : part;
-  });
 }
 
 /**
