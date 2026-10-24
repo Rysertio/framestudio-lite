@@ -184,7 +184,7 @@ The inbox needs extra Meta permissions on top of publishing, and WhatsApp needs 
 
 ## Assistant and MCP
 
-**Assistant** in the sidebar runs the studio by chatting: "add this brand from its website", "plan three reels a week for Dhaka Bites at 8 pm with my approval", "publish yesterday's video to all its Pages", "what did we spend this month?". It is Claude Code connected to 37Studio's own MCP server and nothing else (no shell, no file edits), so it can only do what the app's buttons do. It asks before it deletes anything, publishes, approves an Autopilot video or replies to a customer. Each reply's cost shows in the chat and on the Costs page, under "Assistant".
+**Assistant** in the sidebar runs the studio by chatting: "add this brand from its website", "plan three reels a week for Dhaka Bites at 8 pm with my approval", "publish yesterday's video to all its Pages", "what did we spend this month?". It is Claude Code (or OpenCode, for any other model in its menu) connected to 37Studio's own MCP server and the web, and nothing else (no shell, no file edits), so it can only do what the app's buttons do. The per-turn budget in Settings caps Claude only; OpenCode has no cap, and its free models can't be used here because they refuse a locked-down setup. It asks before it deletes anything, publishes, approves an Autopilot video or replies to a customer. Each reply's cost shows in the chat and on the Costs page, under "Assistant".
 
 **MCP server.** Any MCP client on the same computer can manage 37Studio from its own chat, through the same tools. That includes Claude Code, Claude Desktop and Cursor. There are 65 tools:
 - brands, their brand library and knowledge base

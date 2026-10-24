@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpIcon, ChatCircleDotsIcon, MicrophoneIcon, MicrophoneSlashIcon, PlusIcon, SquareIcon } from "@phosphor-icons/react";
 import { api, ChatEvent, fail, Meta, useApi } from "../api";
-import { Empty } from "../ui";
+import { Empty, ModelOptions } from "../ui";
 import { EventView, modelName, Parsed, ToolGroup, useDictation } from "./Project";
 
 interface AssistantState { events: ChatEvent[]; running: boolean; started: boolean }
@@ -19,7 +19,8 @@ export default function Assistant() {
   const [events, setEvents] = useState<ChatEvent[]>([]);
   const [running, setRunning] = useState(false);
   const [text, setText] = useState("");
-  // Claude models only: the Assistant drives the app's own tools through Claude Code. Sonnet is plenty for that.
+  // The video chat's models: Claude through Claude Code, the rest through OpenCode (assistant.go). Sonnet is plenty.
+  // OpenCode's free models are left out: they refuse an OpenCode whose tools are locked down to this app's.
   const { data: meta } = useApi<Meta>("/meta");
   const [quality, setQuality] = useState("draft");
   const mic = useDictation("en", (said) => setText((t) => (t ? t.trimEnd() + " " : "") + said));
@@ -116,7 +117,7 @@ export default function Assistant() {
               )}
               <select className="cselect" value={quality} onChange={(e) => setQuality(e.target.value)} aria-label="Model for this message"
                 title={meta?.qualities.find((q) => q.id === quality)?.note}>
-                {(meta?.qualities ?? []).filter((q) => !q.harness).map((q) => <option key={q.id} value={q.id}>{modelName(q.model)}{q.effort === "xhigh" ? " max" : ""}</option>)}
+                <ModelOptions qualities={(meta?.qualities ?? []).filter((q) => !(q.harness && q.id.endsWith("-free")))} claudeLabel={(q) => modelName(q.model) + (q.effort === "xhigh" ? " max" : "")} />
               </select>
               <span className="small faint spacer ellipsis" style={{ marginLeft: 6 }}>Asks before it deletes, publishes or replies to customers.</span>
               {running && <button className="cbtn stop" onClick={stop} title="Stop (Esc)" aria-label="Stop"><SquareIcon size={13} weight="fill" /></button>}

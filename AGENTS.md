@@ -41,7 +41,7 @@ node --check relay/src.js                        # WhatsApp relay syntax
 - **Files:** use `files.ProjectDir`, `files.TenantDir` and the rest. Join user-supplied paths only with `files.Within`, which can't escape its root.
 - **Outbound calls:** use `remote.Call` / `remote.CallWith`, so the platform's own error message reaches the user. Stream big uploads (`remote.Multipart`, `remote.Uploads`); never read a video into memory.
 - **Secrets:** keys live encrypted in the database (`internal/keys`). Name platform secrets `…_SECRET`: `agent.Env` strips every `*_SECRET` variable from the agent's environment. The API shows only a key's last four characters.
-- **The MCP server is the whole app.** Every API route a person can use should have a tool in `internal/mcp` (`TestMCP` checks that each tool's path is a real route). When you add a route, add its tool. The Assistant (`internal/assistant`) is Claude Code connected only to that server.
+- **The MCP server is the whole app.** Every API route a person can use should have a tool in `internal/mcp` (`TestMCP` checks that each tool's path is a real route). When you add a route, add its tool. The Assistant (`internal/assistant`) is Claude Code, or OpenCode for other providers' models, connected only to that server.
 - **Long work runs in the background** (agent turns, renders, scans, imports, posts) and reports through project events and status. Requests return at once.
 
 ## Conventions

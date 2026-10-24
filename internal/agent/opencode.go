@@ -147,7 +147,7 @@ func startOpenCode(id int64, p map[string]any, q Quality, text string, announce 
 		return err
 	}
 	go func() {
-		if s := parseOpenCode(id, p["tenant_id"].(int64), q.Model, pr); s != "" && sid == "" {
+		if s := ParseOpenCode(id, p["tenant_id"].(int64), q.Model, pr); s != "" && sid == "" {
 			store.DB.Exec("update projects set oc_session=? where id=?", s, id)
 		}
 		io.Copy(io.Discard, pr)
@@ -156,8 +156,8 @@ func startOpenCode(id int64, p map[string]any, q Quality, text string, announce 
 	return nil
 }
 
-// parseOpenCode maps OpenCode's JSON events onto the same chat events and usage rows as Claude runs.
-func parseOpenCode(pid, tenant int64, model string, r io.Reader) (session string) {
+// ParseOpenCode maps OpenCode's JSON events onto the same chat events and usage rows as Claude runs.
+func ParseOpenCode(pid, tenant int64, model string, r io.Reader) (session string) {
 	start := time.Now()
 	var cost, tokens float64
 	steps := 0
@@ -181,6 +181,12 @@ func parseOpenCode(pid, tenant int64, model string, r io.Reader) (session string
 					Total float64 `json:"total"`
 				} `json:"tokens"`
 			} `json:"part"`
+			Error struct {
+				Name string `json:"name"`
+				Data struct {
+					Message string `json:"message"`
+				} `json:"data"`
+			} `json:"error"`
 		}
 		if json.Unmarshal(sc.Bytes(), &ev) != nil {
 			continue
@@ -199,6 +205,8 @@ func parseOpenCode(pid, tenant int64, model string, r io.Reader) (session string
 			if ev.Part.State.Status == "error" {
 				AddEvent(pid, "tool_error", map[string]string{"text": textutil.Tail(ev.Part.State.Error, 600)})
 			}
+		case "error": // a refused or failed model call: OpenCode exits cleanly, so this is the only trace of it
+			AddEvent(pid, "error", map[string]string{"text": cmp.Or(ev.Error.Data.Message, ev.Error.Name, "The model call failed.")})
 		case "step_finish":
 			cost += ev.Part.Cost
 			tokens += ev.Part.Tokens.Total
@@ -210,6 +218,9 @@ func parseOpenCode(pid, tenant int64, model string, r io.Reader) (session string
 		"model": model, "harness": "opencode"})
 	return session
 }
+
+// Recap retells what happened since the harness last ran, for chats outside a project (the Assistant).
+func Recap(id int64, harness string) string { return recap(id, lastTurn(id, harness)) }
 
 // lastTurn is the id of the last finished turn by a harness (-1 if it never ran), so recap knows where to start.
 func lastTurn(id int64, harness string) int64 {
