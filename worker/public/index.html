@@ -135,11 +135,23 @@
     <div class="head rv">
       <span class="eyebrow">Watch the intro</span>
       <h2>See it work, then set it up</h2>
-      <p class="lead">Three minutes: what 37Studio does for a team running many brands, the new Assistant and MCP server, then how to install it and add your keys.</p>
+      <p class="lead">Two minutes: share a link, say what you want, and 37Studio makes it, posts it everywhere and answers the messages. Then your AI agent sets it up for you.</p>
+    </div>
+    <div class="lang-switch rv" role="group" aria-label="Video language">
+      <button type="button" aria-pressed="true" data-src="/intro.mp4" data-poster="/intro-poster.jpg">English</button>
+      <button type="button" aria-pressed="false" data-src="/intro-bn.mp4" data-poster="/intro-bn-poster.jpg" lang="bn">বাংলা</button>
     </div>
     <div class="frame rv intro-video">
-      <video src="/intro.mp4" poster="/intro-poster.jpg" controls preload="none" playsinline width="1920" height="1080"></video>
+      <video id="intro-video" src="/intro.mp4" poster="/intro-poster.jpg" controls preload="none" playsinline width="1920" height="1080"></video>
     </div>
+    <script>
+      // One player, two languages: switching keeps it paused on the other version's poster.
+      for (const b of document.querySelectorAll(".lang-switch button")) b.addEventListener("click", () => {
+        const v = document.getElementById("intro-video");
+        v.pause(); v.src = b.dataset.src; v.poster = b.dataset.poster;
+        for (const x of document.querySelectorAll(".lang-switch button")) x.setAttribute("aria-pressed", x === b);
+      });
+    </script>
   </div>
 </section>
 

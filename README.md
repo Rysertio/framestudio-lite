@@ -13,13 +13,13 @@ Videos made, posted and answered, with your own keys and no monthly bill.</p>
 </p>
 
 <p align="center">
-  <a href="https://studio.shaitrish.com/#intro"><b>▶ Watch the intro video</b></a> ·
+  <a href="https://studio.shaitrish.com/#intro"><b>▶ Watch the 2-minute intro</b></a> (English · বাংলা) ·
   <a href="https://studio.shaitrish.com/setup">Setup guide</a> ·
   <a href="https://github.com/Shaitrish/37studio/issues">Issues</a> ·
   <a href="https://studio.shaitrish.com/donate">Donate</a>
 </p>
 
-[![37Studio in 14 seconds: one person, many clients, every Page posted](https://studio.shaitrish.com/intro.gif)](https://studio.shaitrish.com/#intro)
+[![37Studio writes a caption for each platform and posts the video to all nine at once](https://studio.shaitrish.com/intro.gif)](https://studio.shaitrish.com/#intro)
 
 ![The project page: the editor agent's chat beside a live preview of a reel](worker/public/shots/project.webp)
 
