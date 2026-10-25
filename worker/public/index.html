@@ -33,6 +33,7 @@
     <symbol id="i-coins" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="9" cy="7" rx="5.5" ry="2.5"/><path d="M3.5 7v4.5C3.5 12.9 6 14 9 14s5.5-1.1 5.5-2.5V7"/><path d="M9.5 16.9c.9.4 2 .6 3.3.6 3 0 5.5-1.1 5.5-2.5V10.5c0-1.3-2.2-2.4-5-2.5"/></symbol>
     <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
     <symbol id="i-sound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></symbol>
     <symbol id="i-code" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 7.5-4.5 4.5L8 16.5m8-9 4.5 4.5-4.5 4.5M13.5 5l-3 14"/></symbol>
     <symbol id="i-mute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="m16 10 4 4m0-4-4 4"/></symbol>
     <symbol id="i-scissors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="7" r="2.5"/><circle cx="6.5" cy="17" r="2.5"/><path d="M8.6 8.4 19 17.5M8.6 15.6 19 6.5"/></symbol>
@@ -85,7 +86,12 @@
       <p class="lead">Turn a short brief into on-brand videos and posts, publish them everywhere and answer every message, on your own computer or server.</p>
       <div class="ctas">
         <a class="btn ink" href="#download"><svg><use href="#i-down"/></svg>Download for Windows &amp; Mac</a>
-        <a class="btn" href="https://github.com/Shaitrish/37studio">View on GitHub</a>
+        <a class="btn" href="https://github.com/Shaitrish/37studio" aria-label="Star 37Studio on GitHub"><svg><use href="#i-star"/></svg>GitHub<span class="stars" hidden></span></a>
+      </div>
+      <div class="found">
+        <span>Find us on</span>
+        <a class="chip sm" href="https://www.producthunt.com/products/37studio"><img src="/logos/producthunt.svg" alt="" width="15" height="15">Product Hunt</a>
+        <a class="chip sm" href="https://peerlist.io/jahangir/project/37studio"><img src="/logos/peerlist.svg" alt="" width="15" height="15">Peerlist</a>
       </div>
       <div class="posts-to">
         <span>Posts to</span>
@@ -548,6 +554,12 @@
     b.querySelector("use").setAttribute("href", v.muted ? "#i-mute" : "#i-sound");
     b.setAttribute("aria-label", v.muted ? "Turn sound on" : "Turn sound off");
   }));
+  // GitHub stars through shields.io, which caches them; GitHub's own API limits each visitor to 60 calls an hour.
+  fetch("https://img.shields.io/github/stars/Shaitrish/37studio.json").then((r) => r.json()).then((j) => {
+    if (!/^\d/.test(j.value)) return;
+    document.querySelectorAll(".stars").forEach((el) => { el.textContent = j.value; el.hidden = false; });
+  }).catch(() => {});
+
   const reel2 = document.getElementById("reel2");
   new IntersectionObserver(([e]) => e.isIntersecting ? reel2.play().catch(() => {}) : reel2.pause(), { threshold: 0.4 }).observe(reel2);
 </script>

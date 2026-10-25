@@ -197,6 +197,9 @@
   /* chips, logo rows */
   .logos { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
   .logos img { width: 22px; height: 22px; }
+  .hero .found { margin-top: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; font-size: 13px; color: var(--muted); }
+  .hero .found .chip { text-decoration: none; }
+  .btn .stars { margin-left: 2px; padding: 2px 8px; border-radius: 99px; background: var(--line); font-size: 13px; font-variant-numeric: tabular-nums; }
   .hero .posts-to { margin-top: 26px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; font-size: 13px; color: var(--muted); }
   .chip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px 8px 10px; border: 1px solid var(--line); background: var(--card); border-radius: 99px; font-size: 14px; color: var(--ink); box-shadow: var(--shadow); white-space: nowrap; }
   .chip img, .chip svg { width: 18px; height: 18px; flex: none; }
