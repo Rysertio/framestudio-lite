@@ -160,7 +160,8 @@ func startOpenCode(id int64, p map[string]any, q Quality, text string, announce 
 func ParseOpenCode(pid, tenant int64, model string, r io.Reader) (session string) {
 	start := time.Now()
 	var cost, tokens float64
-	steps := 0
+	steps, stopped := 0, false
+	budget := store.SettingF("run_budget_usd")
 	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 1<<20), 64<<20)
 	for sc.Scan() {
@@ -211,6 +212,12 @@ func ParseOpenCode(pid, tenant int64, model string, r io.Reader) (session string
 			cost += ev.Part.Cost
 			tokens += ev.Part.Tokens.Total
 			steps++
+			// OpenCode has no --max-budget-usd, so the per-turn limit is enforced here, after the step that crossed it.
+			if budget > 0 && cost > budget && !stopped {
+				stopped = true
+				AddEvent(pid, "error", map[string]string{"text": fmt.Sprintf("Stopped: this turn cost $%.2f, over the $%.2f per-turn limit in Settings → Spending.", cost, budget)})
+				kill(pid)
+			}
 		}
 	}
 	store.DB.Exec("insert into usage(project_id,tenant_id,provider,item,quantity,cost) values(?,?,?,?,?,?)", pid, tenant, "opencode", model, tokens, cost)

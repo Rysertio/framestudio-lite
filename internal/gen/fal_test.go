@@ -10,8 +10,15 @@ import (
 	"testing"
 
 	"github.com/Shaitrish/37studio/internal/config"
+	"github.com/Shaitrish/37studio/internal/remote"
 	"github.com/Shaitrish/37studio/internal/store"
 )
+
+// The stand-in platform servers run on 127.0.0.1, which the outbound clients otherwise refuse.
+func TestMain(m *testing.M) {
+	remote.AllowPrivate = true
+	os.Exit(m.Run())
+}
 
 // A fal video: submit to the queue, poll until done, download the file and bill it at the video price; a first frame
 // switches to the image-to-video endpoint and goes inline.

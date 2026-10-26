@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/Shaitrish/37studio/internal/textutil"
@@ -56,9 +57,27 @@ func CallHeader(c *http.Client, req *http.Request) (http.Header, error) {
 	return res.Header, nil
 }
 
-var Client = &http.Client{Timeout: time.Minute}
+var Client = &http.Client{Timeout: time.Minute, Transport: guarded}
 
-var Uploads = &http.Client{} // uploads can take many minutes on a slow uplink
+var Uploads = &http.Client{Transport: guarded} // uploads can take many minutes on a slow uplink
+
+// guarded checks the address each connection actually goes to, so a host that passed Public and then changed its DNS
+// answer (rebinding) still can't reach this machine's network. ponytail: an HTTP proxy is checked, not what's behind it.
+var guarded = func() *http.Transport {
+	t := http.DefaultTransport.(*http.Transport).Clone()
+	t.DialContext = (&net.Dialer{Timeout: 30 * time.Second, KeepAlive: 30 * time.Second, Control: func(_, address string, _ syscall.RawConn) error {
+		host, _, _ := net.SplitHostPort(address)
+		if ip := net.ParseIP(host); ip != nil && !AllowPrivate && private(ip) {
+			return fmt.Errorf("%s is on a private network, which 37Studio doesn't connect to; to allow it, set STUDIO37_ALLOW_PRIVATE_URLS=1", host)
+		}
+		return nil
+	}}).DialContext
+	return t
+}()
+
+func private(ip net.IP) bool {
+	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified()
+}
 
 func Get(u, auth string) *http.Request {
 	req, _ := http.NewRequest("GET", u, nil)
@@ -141,8 +160,8 @@ var AllowPrivate = os.Getenv("STUDIO37_ALLOW_PRIVATE_URLS") == "1"
 
 // Public refuses a host that is, or resolves to, a loopback, private, link-local or unspecified address, so a pasted
 // URL can't make the server fetch from its own network: cloud metadata, other containers on the Docker network.
-// ponytail: checked when the URL comes in; DNS that changes its answer before the fetch gets past it. A dialer
-// Control hook would close that, but the fetches run in yt-dlp and HyperFrames, not here.
+// Fetches made here also go through guarded, which checks again at connect time. ponytail: yt-dlp and HyperFrames
+// fetch on their own, so for them this check when the URL comes in is the only one.
 func Public(host string) error {
 	if AllowPrivate {
 		return nil
@@ -152,7 +171,7 @@ func Public(host string) error {
 		return fmt.Errorf("can't find %s; check the address", host)
 	}
 	for _, ip := range ips {
-		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() {
+		if private(ip) {
 			return fmt.Errorf("%s is on a private network, which 37Studio doesn't fetch from; to allow it, set STUDIO37_ALLOW_PRIVATE_URLS=1", host)
 		}
 	}

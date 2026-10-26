@@ -12,7 +12,6 @@ import (
 
 	"github.com/Shaitrish/37studio/internal/config"
 	"github.com/Shaitrish/37studio/internal/keys"
-	"github.com/Shaitrish/37studio/internal/remote"
 	"github.com/Shaitrish/37studio/internal/store"
 )
 
@@ -104,8 +103,6 @@ func TestMastodonAndBluesky(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	remote.AllowPrivate = true // the stand-in server is on 127.0.0.1
-	defer func() { remote.AllowPrivate = false }()
 	connect := func(fn func(*http.Request) (any, error), body string) error {
 		req := httptest.NewRequest("POST", "/api/tenants/1/x", strings.NewReader(body))
 		req.SetPathValue("id", "1")

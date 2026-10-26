@@ -14,6 +14,12 @@ import (
 	"github.com/Shaitrish/37studio/internal/remote"
 )
 
+// The stand-in platform servers run on 127.0.0.1, which the outbound clients otherwise refuse.
+func TestMain(m *testing.M) {
+	remote.AllowPrivate = true
+	os.Exit(m.Run())
+}
+
 // callWith must tell success from failure across Meta, Google and TikTok reply styles, and surface the platform's message.
 func TestCallWithErrors(t *testing.T) {
 	cases := []struct {

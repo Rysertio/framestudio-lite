@@ -118,8 +118,8 @@ func startAssistant(text, quality string) error {
 }
 
 // startOpenCode runs the other providers' models the same way: an OpenCode agent whose only tools are this app's MCP
-// server and the web, with no shell, file or other MCP tools. ponytail: no spend cap, since OpenCode has nothing like
-// --max-budget-usd; the per-turn budget in Settings covers Claude only.
+// server and the web, with no shell, file or other MCP tools. OpenCode has nothing like --max-budget-usd, so
+// ParseOpenCode stops the turn once its cost passes the per-turn budget in Settings.
 func startOpenCode(dir, text string, q agent.Quality) error {
 	if _, err := exec.LookPath("opencode"); err != nil {
 		return httpapi.Bad("OpenCode is not installed (npm i -g opencode-ai)")

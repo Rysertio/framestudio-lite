@@ -313,13 +313,21 @@ func Launch(id int64, cmd *exec.Cmd, done func(error)) error {
 func StopRun(r *http.Request) (any, error) { return nil, StopProc(httpapi.PathID(r)) }
 
 func StopProc(id int64) error {
+	if !IsRunning(id) {
+		return httpapi.Bad("nothing is running")
+	}
+	AddEvent(id, "info", map[string]string{"text": "Stopped by editor."})
+	return kill(id)
+}
+
+// kill ends whatever runs for this id, with its children, and says nothing in the chat.
+func kill(id int64) error {
 	procMu.Lock()
 	cmd := procs[id]
 	procMu.Unlock()
 	if cmd == nil {
-		return httpapi.Bad("nothing is running")
+		return nil
 	}
-	AddEvent(id, "info", map[string]string{"text": "Stopped by editor."})
 	return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 }
 
@@ -376,9 +384,25 @@ func Env(extra ...string) []string {
 
 var queueMu sync.Mutex
 
-var queued = map[int64][]string{} // messages typed while the agent was busy; ponytail: in memory, a restart drops them
+// takeQueued removes and returns what was typed while the agent was busy, and the model picked last.
+func takeQueued(id int64) (msgs []string, quality string) {
+	queueMu.Lock() // a turn ending and a new message arriving must not both send the same queue
+	defer queueMu.Unlock()
+	rs, _ := store.Rows("select id, text, quality from queued_messages where project_id=? order by id", id)
+	for _, r := range rs {
+		msgs, quality = append(msgs, store.Str(r["text"])), store.Str(r["quality"])
+		store.DB.Exec("delete from queued_messages where id=?", r["id"])
+	}
+	return msgs, quality
+}
 
-var queuedQ = map[int64]string{} // model picked for the queued messages (the last pick wins)
+// ResumeQueued tells each project whose queued messages a restart caught that they go out with the next message.
+func ResumeQueued() {
+	rs, _ := store.Rows("select distinct project_id from queued_messages")
+	for _, r := range rs {
+		AddEvent(r["project_id"].(int64), "info", map[string]string{"text": "37Studio restarted before sending what you typed while the agent was working. It goes with your next message."})
+	}
+}
 
 // PostMessage sends a message to the agent, or queues it while the agent (or a render) is busy,
 // the way Claude Code queues what you type mid-turn.
@@ -393,12 +417,14 @@ func PostMessage(r *http.Request) (any, error) {
 		if text == "" {
 			return nil, httpapi.Bad("message is empty")
 		}
-		queueMu.Lock()
-		queued[id] = append(queued[id], text)
-		queuedQ[id] = quality
-		queueMu.Unlock()
+		if _, err := store.DB.Exec("insert into queued_messages(project_id,text,quality) values(?,?,?)", id, text, quality); err != nil {
+			return nil, err
+		}
 		AddEvent(id, "user", map[string]any{"text": text, "queued": true})
 		return map[string]bool{"queued": true}, nil
+	}
+	if msgs, _ := takeQueued(id); len(msgs) > 0 { // left over from before a restart
+		text = strings.TrimSpace(strings.Join(append(msgs, text), "\n\n"))
 	}
 	return map[string]bool{"ok": true}, StartRun(id, text, quality, true)
 }
@@ -409,11 +435,7 @@ var AfterTurn []func(id int64)
 
 // drainQueue starts the next turn with everything typed during the last one.
 func drainQueue(id int64) {
-	queueMu.Lock()
-	msgs, quality := queued[id], queuedQ[id]
-	delete(queued, id)
-	delete(queuedQ, id)
-	queueMu.Unlock()
+	msgs, quality := takeQueued(id)
 	defer func() { // every agent turn and render ends here
 		for _, f := range AfterTurn {
 			go f(id)

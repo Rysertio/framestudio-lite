@@ -159,6 +159,12 @@ create table if not exists posts(
   created_at text not null default current_timestamp
 );
 create index if not exists posts_due on posts(status, publish_at);
+create table if not exists queued_messages( -- typed while the agent was busy; sent when its turn ends
+  id integer primary key,
+  project_id integer not null references projects(id) on delete cascade,
+  text text not null,
+  quality text not null default ''
+);
 `
 
 func Open() {
