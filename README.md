@@ -10,11 +10,13 @@ Videos made, posted and answered, with your own keys and no monthly bill.</p>
   <a href="https://studio.shaitrish.com"><img src="https://img.shields.io/badge/website-studio.shaitrish.com-1f1c27" alt="Website"></a>
   <img src="https://img.shields.io/badge/runs%20on-Windows%20%C2%B7%20macOS%20%C2%B7%20Linux%20%C2%B7%20cloud-555" alt="Windows, macOS, Linux, cloud">
   <img src="https://img.shields.io/badge/docker-amd64%20%C2%B7%20arm64-2496ed" alt="Docker image for amd64 and arm64">
+  <a href="https://skillsllm.com/skill/37studio"><img src="https://skillsllm.com/badges/security.svg?slug=37studio" alt="SkillsLLM Automated Security Scan"></a>
 </p>
 
 <p align="center">
   <a href="https://studio.shaitrish.com/#intro"><b>▶ Watch the 2-minute intro</b></a> (English · বাংলা) ·
   <a href="https://studio.shaitrish.com/setup">Setup guide</a> ·
+  <a href="CHANGELOG.md">Changelog</a> ·
   <a href="https://github.com/Shaitrish/37studio/issues">Issues</a> ·
   <a href="https://studio.shaitrish.com/donate">Donate</a>
 </p>
@@ -184,7 +186,7 @@ The inbox needs extra Meta permissions on top of publishing, and WhatsApp needs 
 
 ## Assistant and MCP
 
-**Assistant** in the sidebar runs the studio by chatting: "add this brand from its website", "plan three reels a week for Dhaka Bites at 8 pm with my approval", "publish yesterday's video to all its Pages", "what did we spend this month?". It is Claude Code (or OpenCode, for any other model in its menu) connected to 37Studio's own MCP server and the web, and nothing else (no shell, no file edits), so it can only do what the app's buttons do. The per-turn budget in Settings caps Claude only; OpenCode has no cap, and its free models can't be used here because they refuse a locked-down setup. It asks before it deletes anything, publishes, approves an Autopilot video or replies to a customer. Each reply's cost shows in the chat and on the Costs page, under "Assistant".
+**Assistant** in the sidebar runs the studio by chatting: "add this brand from its website", "plan three reels a week for Dhaka Bites at 8 pm with my approval", "publish yesterday's video to all its Pages", "what did we spend this month?". It is Claude Code (or OpenCode, for any other model in its menu) connected to 37Studio's own MCP server and the web, and nothing else (no shell, no file edits), so it can only do what the app's buttons do. The per-turn budget in Settings caps every reply (on OpenCode, the reply stops after the step that passes it), and OpenCode's free models can't be used here because they refuse a locked-down setup. It asks before it deletes anything, publishes, approves an Autopilot video or replies to a customer. Each reply's cost shows in the chat and on the Costs page, under "Assistant".
 
 **MCP server.** Any MCP client on the same computer can manage 37Studio from its own chat, through the same tools. That includes Claude Code, Claude Desktop and Cursor. There are 65 tools:
 - brands, their brand library and knowledge base
@@ -239,7 +241,7 @@ Settings are environment variables: in `.env` when running from source, under `e
 | `STUDIO37_DOMAIN` | | | Cloud file only: your domain, for Caddy's certificate and `STUDIO37_PUBLIC_URL` |
 | `STUDIO37_AGENT_PERMISSIONS` | `safe` | | `safe` (allowlist) or `bypass` (any command; the launcher and cloud file set it) |
 | `STUDIO37_RELAY_URL` | unset | | Your own WhatsApp webhook relay ([deploy it](docs/platforms.md#run-your-own-relay-whatsapp)), if you don't use a [tunnel](docs/platforms.md#whatsapp-through-a-cloudflare-tunnel). `STUDIO37_AUTH_URL` is still read if this is unset |
-| `STUDIO37_ALLOW_PRIVATE_URLS` | unset | | `1` lets website scans, video imports and Bluesky/Mastodon servers use addresses on your own network (localhost, LAN, `10.x`, `192.168.x`); refused by default |
+| `STUDIO37_ALLOW_PRIVATE_URLS` | unset | | `1` lets website scans, video imports, Bluesky/Mastodon servers and every other outbound connection use addresses on your own network (localhost, LAN, `10.x`, `192.168.x`); refused by default. Set it too if you reach the internet through a proxy on your network |
 | `STUDIO37_UPDATE_URL` | `https://api.github.com/repos/Shaitrish/37studio/releases/latest` | | Where the update check looks for new releases (GitHub Releases, every 6 hours); a fork can point at its own `…/releases/latest` |
 | `STUDIO37_DATA` | `./data` | | Everything lives here: `37studio.db`, `secret.key`, `tenants/`, `projects/`, `templates/` |
 | `STUDIO37_ADDR` | `127.0.0.1:8080` | | Listen address (the image sets `:8080`; the compose files publish it on `127.0.0.1` only or behind Caddy) |
@@ -297,7 +299,7 @@ Browser ──► 37studio (Go, one binary) ──► SQLite + data/ (brands, pr
 
 **Can I use my Runway, Kling or other video subscription?** Not directly. Monthly plans for video tools (Runway, Kling, Google AI Pro and the like) work only on their own websites; using a model from another app needs a separate API key, billed on its own. Make the clip on their site, then upload it to a project or paste a Google Drive link, and the agent edits it like any other footage. For clips generated inside 37Studio, add a Gemini or fal.ai key; fal.ai's API includes Kling and Seedance.
 
-**When does the agent generate images, clips or voice?** Only when the footage and the brand's library can't do the job, because every generation is billed. It says what it generated, and the cost shows on the project. On Autopilot it decides on its own. The per-turn budget in Settings caps Claude's spend only; generated media is billed on top, so keep an eye on the **Costs** page.
+**When does the agent generate images, clips or voice?** Only when the footage and the brand's library can't do the job, because every generation is billed. It says what it generated, and the cost shows on the project. On Autopilot it decides on its own. The per-turn budget in Settings caps the agent's own model spend only; generated media is billed on top, so keep an eye on the **Costs** page.
 
 More questions: [open an issue](https://github.com/Shaitrish/37studio/issues).
 

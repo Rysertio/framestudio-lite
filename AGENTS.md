@@ -52,6 +52,7 @@ node --check relay/src.js                        # WhatsApp relay syntax
 - UI text and error messages say what happened and what to do next, in plain words. Costs are recorded in USD and shown in the user's currency.
 - Keep it local-first: no telemetry, no accounts, and nothing that sends user data anywhere new. Footage and messages stay on the user's machine.
 - When setup or configuration changes, update `README.md`, `docs/platforms.md` or `docs/architecture.md`.
+- Add a line to `CHANGELOG.md` under Unreleased for anything a user would notice, in the same plain words as the UI.
 
 ## Product rules
 
@@ -62,4 +63,4 @@ node --check relay/src.js                        # WhatsApp relay syntax
 
 ## Releasing (maintainers)
 
-Bump `Version` in `internal/update/update.go`, then run `./release.sh "What changed"`. It pushes the multi-arch image to ghcr.io, zips `dist/` into the website's download, deploys the website Worker and tags the commit `vX.Y.Z` with a GitHub Release, which every copy's update check reads. Never commit `data/`, `.env` or any backup of them.
+Bump `Version` in `internal/update/update.go` and move `CHANGELOG.md`'s Unreleased entries under a `## [X.Y.Z] - date` heading, then run `./release.sh "What changed"`. It pushes the multi-arch image to ghcr.io, zips `dist/` into the website's download, deploys the website Worker and tags the commit `vX.Y.Z` with a GitHub Release, which every copy's update check reads. Never commit `data/`, `.env` or any backup of them.

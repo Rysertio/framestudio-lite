@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Publish a release to everyone: build and push the Docker image, bundle the launcher, deploy the website on
 # studio.shaitrish.com, and create the GitHub release that copies' update check reads.
-# Bump `Version` in internal/update/update.go first.   Usage: ./release.sh "What changed"
+# Bump `Version` in internal/update/update.go and give CHANGELOG.md a `## [X.Y.Z]` section first.   Usage: ./release.sh "What changed"
 set -euo pipefail
 cd "$(dirname "$0")"
 IMAGE=${IMAGE:-ghcr.io/shaitrish/37studio}
 V=$(sed -n 's/^const Version = "\(.*\)"/\1/p' internal/update/update.go)
+grep -q "^## \[$V\]" CHANGELOG.md || { echo "CHANGELOG.md has no '## [$V]' section: move Unreleased under it first" >&2; exit 1; }
 # Both Intel PCs and Apple Silicon Macs: arm64 is built under QEMU emulation and needs a docker-container builder.
 [ -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ] || docker run --privileged --rm tonistiigi/binfmt --install arm64
 docker buildx inspect studio37 >/dev/null 2>&1 || docker buildx create --name studio37 --driver docker-container
