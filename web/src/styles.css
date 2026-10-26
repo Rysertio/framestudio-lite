@@ -278,7 +278,7 @@ input[type="color"].input { padding: 3px; height: 36px; cursor: pointer; }
 .tile .acts { position: absolute; top: 6px; right: 6px; display: flex; gap: 4px; opacity: 0; transition: opacity 0.12s; }
 .tile:hover .acts, .tile:focus-within .acts { opacity: 1; }
 .tile .acts .btn { background: var(--overlay); }
-.tile.selected { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+.tile.selected { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary), 0 0 0 5px var(--primary-soft); }
 .tile button.cover { all: unset; cursor: pointer; display: block; }
 
 .filelist { display: flex; flex-direction: column; }

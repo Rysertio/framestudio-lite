@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import {
   ArrowSquareOutIcon, CaretRightIcon, ChartLineUpIcon, CheckCircleIcon, CircleIcon, CpuIcon, InfoIcon, KeyIcon, PlugsConnectedIcon,
-  RocketLaunchIcon, ShareNetworkIcon, WarningCircleIcon, Icon,
+  DownloadSimpleIcon, HardDrivesIcon, RocketLaunchIcon, ShareNetworkIcon, WarningCircleIcon, Icon,
 } from "@phosphor-icons/react";
-import { api, connectGuideURL, donateURL, fail, languageName, makerURL, Meta, money, repoURL, setDisplay, toast, useApi, Voice } from "../api";
+import { api, bytes, connectGuideURL, donateURL, fail, languageName, makerURL, Meta, money, repoURL, setDisplay, toast, useApi, Voice } from "../api";
 import { Field, Seg } from "../ui";
 import { Brand, BrandId } from "../brands";
 
@@ -138,6 +138,7 @@ const tabs: { id: string; label: string; Icon: Icon }[] = [
   { id: "social", label: "Social apps", Icon: ShareNetworkIcon },
   { id: "spending", label: "Spending", Icon: ChartLineUpIcon },
   { id: "performance", label: "Performance", Icon: CpuIcon },
+  { id: "storage", label: "Storage", Icon: HardDrivesIcon },
   { id: "agents", label: "Other AI apps", Icon: PlugsConnectedIcon },
   { id: "about", label: "About", Icon: InfoIcon },
 ];
@@ -358,6 +359,7 @@ export default function Settings({ tab: tabParam }: { tab?: string }) {
             </Section>
           )}
 
+          {tab === "storage" && <StorageSection />}
           {tab === "agents" && <McpSection password={!!meta?.env.password} />}
           {tab === "about" && <AboutSection meta={meta} />}
         </div>
@@ -571,6 +573,88 @@ function AboutSection({ meta }: { meta?: Meta }) {
           {meta && <p className="small faint" style={{ margin: "6px 0 0" }}>HyperFrames {meta.hf_version} · your data is in <span className="mono">{meta.data_dir}</span></p>}
         </div>
       </div>
+    </>
+  );
+}
+
+interface StorageInfo {
+  total: number; free: number;
+  projects: { id: number; title: string; tenant_name: string; finals: number; drafts: number; sources: number; other: number; total: number }[];
+  brands: { id: number; name: string; total: number }[];
+}
+
+/** What fills the disk, biggest first, and a way to clear out old drafts. Finals and sources are deleted from their own pages. */
+function StorageSection() {
+  const { data, reload } = useApi<StorageInfo>("/storage");
+  const [days, setDays] = useState("30");
+  const [busy, setBusy] = useState(false);
+  const drafts = data?.projects.reduce((n, p) => n + p.drafts, 0) ?? 0;
+  const clean = () => {
+    if (!confirm(`Delete draft renders and generated media older than ${days} days, in every project? Final videos, sources and files a waiting post needs stay. This can't be undone.`)) return;
+    setBusy(true);
+    api<{ files: number; bytes: number }>("/storage/cleanup", { body: { days: Number(days) } })
+      .then((r) => { toast(r.files ? `Deleted ${r.files} file${r.files > 1 ? "s" : ""}, freed ${bytes(r.bytes)}` : "No drafts that old"); reload(); }, fail)
+      .finally(() => setBusy(false));
+  };
+  const cell = (n: number) => <td className="num">{n ? bytes(n) : <span className="faint">–</span>}</td>;
+  return (
+    <>
+      <Section title="Disk space" sub={data ? `37Studio uses ${bytes(data.total)}${data.free ? `; ${bytes(data.free)} is free on this disk` : ""}.` : "Measuring…"}>
+        <Field label="Clear out old drafts" hint={`draft renders and AI images, clips, voice and music; ${bytes(drafts)} of drafts in all`}>
+          <div className="row">
+            <select className="select" value={days} onChange={(e) => setDays(e.target.value)} aria-label="Older than">
+              {["7", "30", "90"].map((d) => <option key={d} value={d}>Older than {d} days</option>)}
+            </select>
+            <button className="btn danger" disabled={busy || !drafts} onClick={clean}>{busy ? "Deleting…" : "Delete"}</button>
+          </div>
+        </Field>
+      </Section>
+      <Section title="Back up" sub="One zip of everything 37Studio keeps: brands, projects, posts, settings, keys and connected accounts.">
+        <div className="stack" style={{ gap: 10, gridColumn: "1 / -1" }}>
+          <div className="row wrap">
+            <a className="btn" href="/api/backup" download><DownloadSimpleIcon size={15} /> Without videos</a>
+            <a className="btn" href="/api/backup?media=1" download title="Also every video and the footage they were made from"><DownloadSimpleIcon size={15} /> With videos{data ? ` (${bytes(data.total)})` : ""}</a>
+          </div>
+          <p className="small muted" style={{ margin: 0 }}>
+            <WarningCircleIcon size={14} style={{ verticalAlign: -2 }} /> The zip holds your API keys and account logins, so keep it somewhere private.
+            To restore it, close 37Studio, unzip it into an empty data folder (<span className="mono">data/</span> next to the launcher), and open 37Studio again.
+          </p>
+        </div>
+      </Section>
+      {!!data?.projects.length && (
+        <div className="card">
+          <div className="card-h" style={{ display: "block" }}><h2>Projects</h2><p className="small muted">Biggest first. Open one to delete single files, or delete the whole project from its Brief tab.</p></div>
+          <div className="table-wrap">
+            <table className="table">
+              <thead><tr><th>Project</th><th className="num">Finals</th><th className="num">Drafts</th><th className="num">Sources</th><th className="num">Other</th><th className="num">Total</th></tr></thead>
+              <tbody>
+                {data.projects.map((p) => (
+                  <tr key={p.id} className="link" onClick={() => { location.hash = `#/projects/${p.id}`; }}>
+                    <td><div className="ellipsis">{p.title}</div><div className="small faint">{p.tenant_name}</div></td>
+                    {cell(p.finals)}{cell(p.drafts)}{cell(p.sources)}{cell(p.other)}<td className="num"><strong>{bytes(p.total)}</strong></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+      {!!data?.brands.length && (
+        <div className="card">
+          <div className="card-h" style={{ display: "block" }}><h2>Brand libraries</h2><p className="small muted">Logos, photos, videos and the copied project folder of each brand.</p></div>
+          <div className="table-wrap">
+            <table className="table">
+              <tbody>
+                {data.brands.map((b) => (
+                  <tr key={b.id} className="link" onClick={() => { location.hash = `#/clients/${b.id}`; }}>
+                    <td>{b.name}</td>{cell(b.total)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </>
   );
 }

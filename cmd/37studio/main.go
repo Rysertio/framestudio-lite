@@ -51,6 +51,7 @@ func main() {
 	store.DB.Exec(`update projects set status='review' where status='running'`)
 	store.DB.Exec(`update tenants set scan_status='failed', scan_note='Interrupted by a server restart.' where scan_status='running'`)
 	agent.AfterTurn = append(agent.AfterTurn, autopilot.Advance, project.ClipAdvance)
+	agent.ResumeQueued()
 	go social.PostLoop()
 	go autopilot.Loop()
 	go project.ClipLoop()
@@ -108,6 +109,9 @@ func routes() *http.ServeMux {
 
 	mux.HandleFunc("GET /api/costs", httpapi.JSON(costs.Report))
 	mux.HandleFunc("GET /api/library", httpapi.JSON(project.ListLibrary))
+	mux.HandleFunc("GET /api/storage", httpapi.JSON(project.Storage))
+	mux.HandleFunc("POST /api/storage/cleanup", httpapi.JSON(project.CleanDrafts))
+	mux.HandleFunc("GET /api/backup", store.Backup) // a zip download, not JSON; no MCP tool, since an agent has nowhere to keep it
 	mux.HandleFunc("GET /api/templates", httpapi.JSON(templates.List))
 	mux.HandleFunc("DELETE /api/templates/{id}", httpapi.JSON(templates.Delete))
 	mux.HandleFunc("POST /api/projects/{id}/template", httpapi.JSON(templates.Save))

@@ -5,14 +5,29 @@ import { Empty, Field, FileTile, Modal, Seg, TenantPicker } from "../ui";
 
 /** Every finished video and image from every project: the ten videos cut from one class sit together here. */
 export default function Library() {
-  const { data } = useApi<LibraryItem[]>("/library");
+  const { data, reload } = useApi<LibraryItem[]>("/library");
   const tenants = useTenants();
   const [kind, setKind] = useState("all");
   const [tenant, setTenant] = useState("");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<LibraryItem>();
   const [saving, setSaving] = useState<LibraryItem>();
+  const [picked, setPicked] = useState<Set<string>>(); // file urls; set while choosing several to delete
   const { data: templates, reload: reloadTemplates } = useApi<Template[]>("/templates");
+  const remove = (x: LibraryItem) => confirm(`Delete "${x.file.name}" from "${x.title}"? This can't be undone. The project stays.`) &&
+    api(`/projects/${x.project_id}/files?path=out/${encodeURIComponent(x.file.path)}`, { method: "DELETE" })
+      .then(() => { setOpen(undefined); reload(); toast("Deleted"); }, fail);
+  const removeMany = async () => {
+    const items = (data ?? []).filter((x) => picked?.has(x.file.url));
+    if (!items.length || !confirm(`Delete ${items.length} file${items.length > 1 ? "s" : ""}? This can't be undone. Their projects stay.`)) return;
+    let failed = 0;
+    for (const x of items) {
+      await api(`/projects/${x.project_id}/files?path=out/${encodeURIComponent(x.file.path)}`, { method: "DELETE" }).catch((e) => { failed++; fail(e); });
+    }
+    if (failed < items.length) toast(`Deleted ${items.length - failed} file${items.length - failed > 1 ? "s" : ""}`);
+    setPicked(undefined);
+    reload();
+  };
   const shown = (data ?? []).filter((x) =>
     (kind === "all" || x.file.kind === kind) && (!tenant || String(x.tenant_id) === tenant) &&
     (!q || `${x.title} ${x.file.name}`.toLowerCase().includes(q.toLowerCase())));
@@ -31,6 +46,10 @@ export default function Library() {
         <span className="spacer" />
         <TenantPicker tenants={tenants} value={Number(tenant) || undefined} all="All brands" onChange={(id) => setTenant(id ? String(id) : "")} />
         <input className="input" style={{ width: 220 }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search titles" aria-label="Search titles" />
+        {kind !== "templates" && !!data?.length && (picked ? <>
+          <button className="btn danger" disabled={!picked.size} onClick={removeMany}><TrashIcon size={15} /> Delete {picked.size || ""}</button>
+          <button className="btn" onClick={() => setPicked(undefined)}>Cancel</button>
+        </> : <button className="btn" onClick={() => setPicked(new Set())}>Select</button>)}
       </div>
       {kind === "templates" ? (
         <Templates templates={(templates ?? []).filter((t) => !tenant || !t.tenant_id || String(t.tenant_id) === tenant)
@@ -45,7 +64,9 @@ export default function Library() {
         <div className="tiles library">
           {shown.map((x) => (
             <div key={x.file.url} className="stack" style={{ gap: 6, minWidth: 0 }}>
-              <FileTile f={x.file} onOpen={() => setOpen(x)} />
+              <FileTile f={x.file} selected={picked?.has(x.file.url)} onOpen={() => picked
+                ? setPicked((s) => { const n = new Set(s); n.has(x.file.url) ? n.delete(x.file.url) : n.add(x.file.url); return n; })
+                : setOpen(x)} />
               <div className="small ellipsis" title={x.title}>
                 <a href={`#/projects/${x.project_id}`}>{x.title}</a>
                 <div className="faint ellipsis">{x.tenant_name} · {date(x.file.mod)}</div>
@@ -60,6 +81,7 @@ export default function Library() {
           footer={<>
             <a className="btn" href={open.file.url} download={open.file.name}><DownloadSimpleIcon size={15} /> Download</a>
             {open.file.kind === "video" && <button className="btn" onClick={() => { setSaving(open); setOpen(undefined); }}><BookmarkSimpleIcon size={15} /> Save as template</button>}
+            <button className="btn danger" onClick={() => remove(open)}><TrashIcon size={15} /> Delete</button>
             <span className="spacer" />
             <a className="btn primary" href={`#/projects/${open.project_id}`} onClick={() => setOpen(undefined)}><ArrowSquareOutIcon size={15} /> Open project to edit or publish</a>
           </>}>

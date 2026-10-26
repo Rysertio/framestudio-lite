@@ -1,3 +1,4 @@
+import "@hyperframes/player";
 import { ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpIcon, BookmarkSimpleIcon, CheckCircleIcon, LinkIcon, ShareNetworkIcon, CaretRightIcon, FilmSlateIcon, DownloadSimpleIcon, FileTextIcon, FilmStripIcon, GlobeIcon, ListChecksIcon, PencilLineIcon, ArrowsClockwiseIcon, ArrowsOutIcon, MicrophoneIcon, MicrophoneSlashIcon, MusicNotesIcon, SpeakerHighIcon, ImageIcon, PlayIcon, PauseIcon, PaperclipIcon, MagnifyingGlassIcon, SlidersHorizontalIcon, SparkleIcon, SquareIcon, TerminalWindowIcon, TrashIcon, MagicWandIcon, WrenchIcon, XIcon } from "@phosphor-icons/react";
 import { Quality } from "../api";
@@ -216,7 +217,7 @@ export default function ProjectPage({ id }: { id: number }) {
             {tab === "generate" && <>
               <Generate p={p} meta={meta} />
               <MediaSection title="Generated for this project" hint="by you or the agent, newest first" empty="Nothing generated yet."
-                files={p.generated ?? []} />
+                files={p.generated ?? []} onDelete={(f) => act0(`/projects/${p.id}/files?path=${encodeURIComponent(f.path)}`, reload)} />
             </>}
             {tab === "posts" && <PostsCard p={p} reload={reload} onPublish={() => setPublishing(true)} />}
             {tab === "cost" && <CostCard p={p} />}
@@ -677,7 +678,7 @@ const mediaName = (path: string) => {
   return base.charAt(0).toUpperCase() + base.slice(1);
 };
 
-function MediaSection({ title, hint, files, empty }: { title: string; hint: string; files: MediaFile[]; empty?: string }) {
+function MediaSection({ title, hint, files, empty, onDelete }: { title: string; hint: string; files: MediaFile[]; empty?: string; onDelete?: (f: MediaFile) => void }) {
   const [playing, setPlaying] = useState<string>();
   const [pick, setPick] = useState<string>();
   const player = useRef<HTMLAudioElement>(null);
@@ -698,6 +699,9 @@ function MediaSection({ title, hint, files, empty }: { title: string; hint: stri
     a.play().then(() => setPlaying(url), fail);
   };
   const meta = (f: MediaFile) => <span className="small faint nowrap">{f.seconds ? clock(f.seconds) : bytes(f.size)}{f.cost ? ` · ${cash(f.cost)}` : ""}</span>;
+  // Only out/ files: anything the agent put in comp/assets may be in the video, and the server refuses it anyway.
+  const del = (f: MediaFile) => onDelete && f.path.startsWith("out/") &&
+    <button className="btn ghost sm icon" onClick={() => onDelete(f)} aria-label={`Delete ${mediaName(f.path)}`} title="Delete"><TrashIcon size={14} /></button>;
   return (
     <div className="card-b stack" style={{ gap: 12, borderTop: "1px solid var(--border)" }}>
       <div className="row wrap"><h3>{title}</h3><span className="small faint">{hint}</span></div>
@@ -720,6 +724,7 @@ function MediaSection({ title, hint, files, empty }: { title: string; hint: stri
                 <span className="spacer ellipsis" title={f.path}>{mediaName(f.path)}{f.item && <span className="faint"> · {f.item}</span>}</span>
                 {meta(f)}
                 <a className="btn ghost sm icon" href={f.url} download aria-label={`Download ${mediaName(f.path)}`} title="Download"><DownloadSimpleIcon size={14} /></a>
+                {del(f)}
               </div>
             ))}
           </div>
@@ -731,6 +736,7 @@ function MediaSection({ title, hint, files, empty }: { title: string; hint: stri
                 <div className="small row" style={{ gap: 6 }}>
                   <span className="ellipsis spacer" title={f.path}>{mediaName(f.path)}</span>
                   {meta(f)}
+                  {del(f)}
                 </div>
                 {f.item && <div className="small faint">{f.item}</div>}
               </div>

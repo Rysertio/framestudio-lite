@@ -1,24 +1,33 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy as lazyPage, Suspense, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ChartPieSliceIcon, ChatCircleDotsIcon, ChatsCircleIcon, FilmSlateIcon, FilmStripIcon, GearSixIcon, HeartIcon, IconContext, MegaphoneIcon, MonitorIcon, MoonIcon, SidebarSimpleIcon,
   SquaresFourIcon, SunIcon, TagIcon,
 } from "@phosphor-icons/react";
-import "@hyperframes/player";
 import "./styles.css";
 import { api, donateURL, makerURL, repoURL, setDisplay, setNudge, setToast, snoozeNudge, useApi } from "./api";
 import { Mark, Modal } from "./ui";
-import Overview from "./pages/Overview";
-import Projects from "./pages/Projects";
-import ProjectPage from "./pages/Project";
-import Clients from "./pages/Clients";
-import ClientPage from "./pages/Client";
-import Costs from "./pages/Costs";
-import Campaigns, { CampaignPage } from "./pages/Campaigns";
-import Settings from "./pages/Settings";
-import Inbox from "./pages/Inbox";
-import Library from "./pages/Library";
-import Assistant from "./pages/Assistant";
+// Each page loads when first opened, so the first screen doesn't wait for the project editor and its video player.
+// After an update the old page's files are gone from the server, so a tab left open reloads once to get the new ones.
+const reloaded = (v?: string) => { try { if (v === undefined) return sessionStorage.getItem("37studio:reloaded"); v ? sessionStorage.setItem("37studio:reloaded", v) : sessionStorage.removeItem("37studio:reloaded"); } catch {} return "1"; };
+const lazy = (load: () => Promise<{ default: React.ComponentType<any> }>) => lazyPage(() => load().then((m) => { reloaded(""); return m; }, (e) => {
+  if (reloaded()) throw e; // reloading already didn't help: show the error instead of looping
+  reloaded("1");
+  location.reload();
+  return new Promise<never>(() => {});
+}));
+const Overview = lazy(() => import("./pages/Overview"));
+const Projects = lazy(() => import("./pages/Projects"));
+const ProjectPage = lazy(() => import("./pages/Project"));
+const Clients = lazy(() => import("./pages/Clients"));
+const ClientPage = lazy(() => import("./pages/Client"));
+const Costs = lazy(() => import("./pages/Costs"));
+const Campaigns = lazy(() => import("./pages/Campaigns"));
+const CampaignPage = lazy(() => import("./pages/Campaigns").then((m) => ({ default: m.CampaignPage })));
+const Settings = lazy(() => import("./pages/Settings"));
+const Inbox = lazy(() => import("./pages/Inbox"));
+const Library = lazy(() => import("./pages/Library"));
+const Assistant = lazy(() => import("./pages/Assistant"));
 
 const nav = [
   { group: "Studio", items: [
@@ -142,7 +151,7 @@ function App() {
             <a className="who" href={makerURL} target="_blank" rel="noreferrer">Made by Shaitrish</a>
           </div>
         </aside>
-        <main className="main">{page}</main>
+        <main className="main"><Suspense fallback={null}>{page}</Suspense></main>
         {toast && <div className={`toast ${toast.err ? "err" : ""}`} role="status">{toast.msg}</div>}
         {why && (
           <Modal title="Nice work" onClose={closeNudge} footer={<>

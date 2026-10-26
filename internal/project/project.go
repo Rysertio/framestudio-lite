@@ -141,11 +141,14 @@ func UploadAttachments(r *http.Request) (any, error) {
 }
 
 func DeleteProjectFile(r *http.Request) (any, error) {
-	p := r.URL.Query().Get("path")
+	p, id := path.Clean(r.URL.Query().Get("path")), httpapi.PathID(r)
 	if !strings.HasPrefix(p, "out/") && !strings.HasPrefix(p, "input/") {
 		return nil, httpapi.Bad("only input/ and out/ files can be deleted")
 	}
-	return nil, os.Remove(files.Within(files.ProjectDir(httpapi.PathID(r)), p))
+	if postWaits(id, p) {
+		return nil, httpapi.Bad("a post waiting to go out uses this file; cancel that post on the Posts tab first")
+	}
+	return nil, os.Remove(files.Within(files.ProjectDir(id), p))
 }
 
 func ListEvents(r *http.Request) (any, error) {

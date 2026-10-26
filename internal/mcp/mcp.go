@@ -90,7 +90,7 @@ var Tools = []mcpTool{
 		Method: "PUT", Path: "/api/tenants/{company_id}", Props: merge(companyDoc, map[string]any{"company_id": brand}), Required: []string{"company_id"}},
 	{Name: "rescan_company", Desc: "Scan the brand's website again to refresh its brand library and knowledge base.",
 		Method: "POST", Path: "/api/tenants/{company_id}/scan", Props: map[string]any{"company_id": brand, "url": pStr("Website, if different"), "notes": pStr("Notes for the scan")}, Required: []string{"company_id"}},
-	{Name: "delete_company", Desc: "Delete a brand and its brand library. Refused while it still has projects. Ask the user first.",
+	{Name: "delete_company", Desc: "Delete a brand with everything it owns: its library, projects and their videos, campaigns, templates, Autopilot plans and connected accounts. Cannot be undone. Ask the user first, naming how many projects go.",
 		Method: "DELETE", Path: "/api/tenants/{company_id}", Props: map[string]any{"company_id": brand}, Required: []string{"company_id"}},
 	{Name: "add_company_asset", Desc: "Add a file to a brand's library, from a URL or as base64.",
 		Props: map[string]any{"company_id": brand, "folder": pEnum("Library folder", files.AssetDirs...), "filename": pStr("File name with extension"),
@@ -156,6 +156,9 @@ var Tools = []mcpTool{
 	{Name: "list_templates", Desc: "Saved templates, optionally for one brand.", Method: "GET", Path: "/api/templates", Query: byTenant, Props: map[string]any{"company_id": brand}},
 	{Name: "delete_template", Desc: "Delete a template; videos made from it stay.", Method: "DELETE", Path: "/api/templates/{template_id}", Props: map[string]any{"template_id": pInt("Template id")}, Required: []string{"template_id"}},
 	{Name: "list_library", Desc: "Every finished video and image across projects.", Method: "GET", Path: "/api/library"},
+	{Name: "get_storage", Desc: "Disk space each project (finals, drafts, sources, other) and brand takes, biggest first, and the free space left.", Method: "GET", Path: "/api/storage"},
+	{Name: "clean_up_drafts", Desc: "Delete draft renders and generated media older than some days, in every project or one. Finals, sources and files a waiting post needs stay. Ask the user first.",
+		Method: "POST", Path: "/api/storage/cleanup", Props: map[string]any{"days": pInt("Older than this many days (1 or more)"), "project_id": project}, Required: []string{"days"}},
 	{Name: "delete_project", Desc: "Delete a project and all its files. Ask the user first.", Method: "DELETE", Path: "/api/projects/{project_id}", Props: map[string]any{"project_id": project}, Required: []string{"project_id"}},
 
 	// publishing and autopilot

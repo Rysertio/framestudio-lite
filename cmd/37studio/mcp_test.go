@@ -77,8 +77,11 @@ func TestMCP(t *testing.T) {
 	if out, bad := tool("add_company_asset", map[string]any{"company_id": 1, "folder": "logo", "filename": "../mark.svg", "content_base64": "PHN2Zy8+"}); bad || !strings.Contains(out, "mark.svg") {
 		t.Fatalf("add_company_asset = %s", out)
 	}
-	if out, bad := tool("delete_company", map[string]any{"company_id": 1}); !bad || !strings.Contains(out, "still has projects") {
-		t.Fatalf("delete_company with projects = %s %v", out, bad)
+	if out, bad := tool("delete_company", map[string]any{"company_id": 1}); bad {
+		t.Fatalf("delete_company with projects = %s", out)
+	}
+	if _, bad := tool("get_project", map[string]any{"project_id": 1}); !bad {
+		t.Fatal("deleting a brand should take its projects with it")
 	}
 	if e := rpc("tools/call", map[string]any{"name": "nope"})["error"]; e == nil {
 		t.Fatal("unknown tool should be a JSON-RPC error")

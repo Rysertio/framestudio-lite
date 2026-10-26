@@ -43,7 +43,8 @@ export default function ClientPage({ id, tab = "library" }: { id: number; tab?: 
   if (!t) return null;
 
   async function remove() {
-    if (!confirm(`Delete ${t!.name} and their whole asset library? This cannot be undone.`)) return;
+    const n = t!.projects?.length ?? 0;
+    if (!confirm(`Delete ${t!.name} with its whole library${n ? `, its ${n} project${n > 1 ? "s" : ""} and every video in them` : ""}, its campaigns, templates, Autopilot plans and connected accounts? This cannot be undone.`)) return;
     try { await api(`/tenants/${id}`, { method: "DELETE" }); go("/clients"); } catch (e) { fail(e); }
   }
 

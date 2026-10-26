@@ -14,6 +14,7 @@ import (
 	"github.com/Shaitrish/37studio/internal/httpapi"
 	"github.com/Shaitrish/37studio/internal/source"
 	"github.com/Shaitrish/37studio/internal/store"
+	"github.com/Shaitrish/37studio/internal/templates"
 )
 
 func List(r *http.Request) (any, error) {
@@ -75,15 +76,50 @@ func Save(r *http.Request) (any, error) {
 	return store.Row("select * from tenants where id=?", id)
 }
 
+// Delete removes a brand with everything it owns: projects and their files, campaigns, templates, Autopilot plans
+// and connected accounts. Usage rows stay, so cost reports still see money that was spent.
 func Delete(r *http.Request) (any, error) {
 	id := httpapi.PathID(r)
-	var n int
-	store.DB.QueryRow("select count(*) from projects where tenant_id=?", id).Scan(&n)
-	if n > 0 {
-		return nil, httpapi.Bad("this brand still has projects; delete those first")
-	}
-	if _, err := store.DB.Exec("delete from tenants where id=?", id); err != nil {
+	ps, err := store.Rows("select id from projects where tenant_id=?", id)
+	if err != nil {
 		return nil, err
+	}
+	for _, p := range ps {
+		if agent.IsRunning(p["id"].(int64)) {
+			return nil, httpapi.Bad("the agent is working on one of this brand's projects; stop it first")
+		}
+	}
+	var posting int
+	store.DB.QueryRow("select count(*) from posts where status='posting' and project_id in (select id from projects where tenant_id=?)", id).Scan(&posting)
+	if posting > 0 {
+		return nil, httpapi.Bad("one of this brand's videos is uploading right now; wait for it to finish")
+	}
+	ts, _ := store.Rows("select id from templates where tenant_id=?", id)
+
+	tx, err := store.DB.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+	for _, q := range []string{
+		"delete from events where project_id in (select id from projects where tenant_id=?)",
+		"delete from posts where project_id in (select id from projects where tenant_id=?)",
+		"delete from projects where tenant_id=?",
+		"delete from campaigns where tenant_id=?",
+		"delete from tenants where id=?", // templates, Autopilot plans and accounts go with it (on delete cascade)
+	} {
+		if _, err := tx.Exec(q, id); err != nil {
+			return nil, err
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	for _, p := range ps {
+		os.RemoveAll(files.ProjectDir(p["id"].(int64)))
+	}
+	for _, t := range ts {
+		os.RemoveAll(templates.Dir(t["id"].(int64)))
 	}
 	return nil, os.RemoveAll(files.TenantRoot(id))
 }
