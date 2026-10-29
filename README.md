@@ -1,45 +1,39 @@
-<p align="center"><img src="brand/37studio-mark.svg" width="72" alt="37Studio"></p>
+<p align="center"><img src="brand/framestudio-mark.svg" width="72" alt="frameStudio"></p>
 
-<h1 align="center">37Studio</h1>
+<h1 align="center">FrameStudio</h1>
 
-<p align="center"><b>An AI video studio and social media desk that runs on your own computer.</b><br>
-Videos made, posted and answered, with your own keys and no monthly bill.</p>
+<p align="center"><b>A fork of Saitrish Studio that uses local LLMs and provides dirst class support for vulkan compute and Android devices with touchscreens.</p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-d4502a" alt="MIT License"></a>
-  <a href="https://studio.shaitrish.com"><img src="https://img.shields.io/badge/website-studio.shaitrish.com-1f1c27" alt="Website"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL-blue" alt="AGPL License"></a>
   <img src="https://img.shields.io/badge/runs%20on-Windows%20%C2%B7%20macOS%20%C2%B7%20Linux%20%C2%B7%20cloud-555" alt="Windows, macOS, Linux, cloud">
   <img src="https://img.shields.io/badge/docker-amd64%20%C2%B7%20arm64-2496ed" alt="Docker image for amd64 and arm64">
   <a href="https://skillsllm.com/skill/37studio"><img src="https://skillsllm.com/badges/security.svg?slug=37studio" alt="SkillsLLM Automated Security Scan"></a>
 </p>
 
 <p align="center">
-  <a href="https://studio.shaitrish.com/#intro"><b>▶ Watch the 2-minute intro</b></a> (English · বাংলা) ·
-  <a href="https://studio.shaitrish.com/setup">Setup guide</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
-  <a href="https://github.com/Shaitrish/37studio/issues">Issues</a> ·
-  <a href="https://studio.shaitrish.com/donate">Donate</a>
+  <a href="https://github.com/Rysertio/framestudio-lite/issues">Issues</a> ·
 </p>
 
-[![37Studio writes a caption for each platform and posts the video to all nine at once](https://studio.shaitrish.com/intro.gif)](https://studio.shaitrish.com/#intro)
 
 ![The project page: the editor agent's chat beside a live preview of a reel](worker/public/shots/project.webp)
 
 37Studio makes videos for a business and runs its social accounts, from one app on your own computer. Add a brand from its website and it builds a brand library and a knowledge base. Brief a video and Claude Code, the editor agent, builds it as a [HyperFrames](https://github.com/heygen-com/hyperframes) composition in that brand, checks its own frames and renders it on your machine. Publish it to the brand's accounts with a caption written for each platform, now, on a schedule or on Autopilot. Messages and comments land in one inbox with replies drafted from the knowledge base.
 
-You bring your own keys (a Claude plan or an Anthropic API key; optionally OpenAI, xAI, OpenRouter or OpenCode for other agent models, Gemini or fal.ai for images and video, ElevenLabs for voice) and pay the providers directly. Every project shows what it cost in AI usage, in USD by default. 37Studio is free and open source under the MIT License, made by [Shaitrish](https://shaitrish.com), a software team in Dhaka.
+37Studio is free and open source under the MIT License, made by [Shaitrish](https://shaitrish.com), a software team in Dhaka. You can support them [Here](https://studio.shaitrish.com/donate)
 
 ## What it does
 
 - **Brand library from a website or folder.** Paste a URL, or pick the brand's own project folder, and get its logos, people, photos, fonts and exact colours sorted and captioned, plus a design system (`design.md`) and a knowledge base (`knowledge.md`).
-- **An editor agent.** Claude Opus 5.5 builds each video as an animated HyperFrames composition, checks its own frames and takes changes in plain words. Edit by hand on a real timeline when you want to.
+- **An editor agent.** ~~Claude Opus 5.5~~ llama.cpp builds each video as an animated HyperFrames composition, checks its own frames and takes changes in plain words. Edit by hand on a real timeline when you want to.
 - **Many kinds of output.** Hook reels, captioned clips, motion-graphics explainers, podcast clips, promo ads, square and portrait posts, and thumbnails. Save any finished video as a template for the next one.
 - **Long recordings into many videos.** A 2-hour class becomes ten reels. Transcription runs locally with faster-whisper: free, private, about 100 languages. YouTube and Google Drive links import directly.
-- **Generated media.** Gemini images; video clips from Gemini or, through fal.ai, Seedance, Kling, Veo, Wan and others; ElevenLabs voiceover, sound effects and music. The agent asks before media on one project costs more than the limit in Settings → Spending, and keeps a person or product consistent by reusing one reference image across shots. The agent uses them only when the footage and brand library can't do the job, and says what it made.
+- **Generated media.** Stable-diffusion.cpp; flite, sound effects and music. The agent asks before media on one project costs more than the limit in Settings → Spending, and keeps a person or product consistent by reusing one reference image across shots. The agent uses them only when the footage and brand library can't do the job, and says what it made.
 - **Publishing and Autopilot.** Post to any mix of a brand's accounts on nine platforms now or on a schedule, or let a content plan make a fresh video before every slot and wait for one-click approval.
 - **One inbox.** Messenger, Instagram and WhatsApp messages and Facebook and Instagram comments, with replies drafted in the customer's language, following the brand's own rules. Off, drafts to approve, or fully automatic, per brand.
 - **Assistant and MCP.** Run everything by chatting with the Assistant in the sidebar, or from your own AI agent (Claude Code, Claude Desktop, Cursor) through 37Studio's MCP server: brands, campaigns, videos, publishing, Autopilot, settings and connections.
-- **Real costs.** Every project, campaign and brand shows its AI spend in your currency. No markup: you pay Anthropic, Google and ElevenLabs directly.
+- **Real costs.** Every project, campaign and brand shows its AI spend in your currency. No markup: you pay ~~Anthropic, Google and ElevenLabs~~ Nvidia, AMD or Intel directly.
 
 Everything runs in one Docker container, on your computer or your own server. Footage, brands and messages stay there; API keys and platform credentials are encrypted on disk.
 
